@@ -1,6 +1,9 @@
 // define variable
 const todos = [];
-const RENDER_EVENT = "render-todo"; // Custom Event
+const STORAGE_KEY = "TODO_APPS";
+
+const RENDER_EVENT = "render-todo";
+const SAVED_EVENT = "saved-todo";
 
 // event
 document.addEventListener("DOMContentLoaded", () => {
@@ -9,6 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
     event.preventDefault();
     addTodo();
   });
+
+  if (isStorageExist()) {
+    loadDataFromStorage();
+  }
 });
 
 document.addEventListener(RENDER_EVENT, () => {
@@ -28,6 +35,10 @@ document.addEventListener(RENDER_EVENT, () => {
   }
 });
 
+document.addEventListener(SAVED_EVENT, () => {
+  console.log(localStorage.getItem(STORAGE_KEY));
+});
+
 // function
 function addTodo() {
   const textTodo = document.getElementById("title").value;
@@ -43,7 +54,8 @@ function addTodo() {
 
   todos.push(todoObject);
 
-  return document.dispatchEvent(new Event(RENDER_EVENT));
+  document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
 
 function generateId() {
@@ -112,7 +124,8 @@ function addTaskToCompleted(todoId) {
   console.log("aman");
 
   todoTarget.isCompleted = true;
-  return document.dispatchEvent(new Event(RENDER_EVENT));
+  document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
 
 function undoTaskFromCompleted(todoId) {
@@ -121,7 +134,8 @@ function undoTaskFromCompleted(todoId) {
   if (todoTarget == null) return;
 
   todoTarget.isCompleted = false;
-  return document.dispatchEvent(new Event(RENDER_EVENT));
+  document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
 
 function removeTaskFromCompleted(todoId) {
@@ -130,7 +144,8 @@ function removeTaskFromCompleted(todoId) {
   if (todoTarget == -1) return;
 
   todos.splice(todoTarget, 1);
-  return document.dispatchEvent(new Event(RENDER_EVENT));
+  document.dispatchEvent(new Event(RENDER_EVENT));
+  saveData();
 }
 
 function findTodo(todoId) {
@@ -149,4 +164,33 @@ function findTodoIndex(todoId) {
       return index;
     }
   }
+}
+
+function saveData() {
+  if (isStorageExist) {
+    const parsed = JSON.stringify(todos);
+    localStorage.setItem(STORAGE_KEY, parsed);
+    document.dispatchEvent(new Event(SAVED_EVENT));
+  }
+}
+
+function isStorageExist() {
+  if (typeof Storage === "undefined") {
+    alert("Browser yang kamu gunakan tidak mendukung Web Storage.");
+    return false;
+  }
+  return true;
+}
+
+function loadDataFromStorage() {
+  const serealizedData = localStorage.getItem(STORAGE_KEY);
+  let data = JSON.parse(serealizedData);
+
+  if (data !== null) {
+    for (let todo of data) {
+      todos.push(todo);
+    }
+  }
+
+  document.dispatchEvent(new Event(RENDER_EVENT));
 }
